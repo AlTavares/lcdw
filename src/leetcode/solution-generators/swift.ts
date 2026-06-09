@@ -23,51 +23,73 @@ export function renderSwiftSolution(question: LeetCodeQuestion, snippet: string)
   const signature = parseSwiftSignature(snippet)
   const testCases = signature ? buildSwiftTestCases(question, signature) : []
   const rawSamples = question.exampleTestcases.trim()
-  const lines = [
-    "import Foundation",
-    "",
-    snippet.trim(),
-    "",
-    "// MARK: - Sample Tests",
-    "",
-  ]
 
   if (signature && testCases.length > 0) {
-    const testInputLabels = swiftTestInputLabels(signature)
-
-    lines.push(
-      "func canonical(_ value: Any) -> String {",
-      '    String(describing: value).replacingOccurrences(of: " ", with: "")',
-      "}",
-      "",
-      "func expect(_ actual: Any, _ expected: String, file: StaticString = #filePath, line: UInt = #line) {",
-      "    let normalizedExpected = expected.replacingOccurrences(of: \" \", with: \"\")",
-      "    assert(canonical(actual) == normalizedExpected, \"Expected \\(expected), got \\(actual)\", file: file, line: line)",
-      "}",
-      "",
-      "let solution = Solution()",
-      "let testCases = [",
-      ...testCases.map((testCase) => `    ${testCase},`),
-      "]",
-      "",
-      "for testCase in testCases {",
-      `    expect(solution.${signature.methodName}(${swiftMethodCallArguments(signature, testInputLabels)}), testCase.expected)`,
-      "}",
-      'print("All sample tests passed")',
-    )
+    return renderSwiftTableTestTemplate({
+      snippet,
+      signature,
+      testCases,
+    })
   } else {
-    lines.push(
-      "let solution = Solution()",
-      "",
-      "let rawSampleInput = \"\"\"",
+    return renderSwiftFallbackTemplate({
+      snippet,
       rawSamples,
-      "\"\"\"",
-      "",
-      'print("Add assertions for the sample input above after implementing the solution.")',
-    )
+    })
   }
+}
 
-  return `${lines.join("\n")}\n`
+function renderSwiftTableTestTemplate(input: {
+  snippet: string
+  signature: SwiftSignature
+  testCases: string[]
+}) {
+  const testInputLabels = swiftTestInputLabels(input.signature)
+
+  return `import Foundation
+
+${input.snippet.trim()}
+
+// MARK: - Sample Tests
+
+func canonical(_ value: Any) -> String {
+    String(describing: value).replacingOccurrences(of: " ", with: "")
+}
+
+func expect(_ actual: Any, _ expected: String, file: StaticString = #filePath, line: UInt = #line) {
+    let normalizedExpected = expected.replacingOccurrences(of: " ", with: "")
+    assert(canonical(actual) == normalizedExpected, "Expected \\(expected), got \\(actual)", file: file, line: line)
+}
+
+let solution = Solution()
+let testCases = [
+${input.testCases.map((testCase) => `    ${testCase},`).join("\n")}
+]
+
+for testCase in testCases {
+    expect(solution.${input.signature.methodName}(${swiftMethodCallArguments(input.signature, testInputLabels)}), testCase.expected)
+}
+print("All sample tests passed")
+`
+}
+
+function renderSwiftFallbackTemplate(input: {
+  snippet: string
+  rawSamples: string
+}) {
+  return `import Foundation
+
+${input.snippet.trim()}
+
+// MARK: - Sample Tests
+
+let solution = Solution()
+
+let rawSampleInput = """
+${input.rawSamples}
+"""
+
+print("Add assertions for the sample input above after implementing the solution.")
+`
 }
 
 export function parseSwiftSignature(snippet: string): SwiftSignature | null {
