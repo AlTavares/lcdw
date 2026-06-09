@@ -282,9 +282,7 @@ async function fetchQuestion(titleSlug: string, fetcher: typeof fetch = fetch) {
 
 export function renderReadme(question: LeetCodeQuestion) {
   const topics = question.topicTags.map((tag) => tag.name).join(", ")
-  const hints = question.hints
-    .map((hint, index) => `${index + 1}. ${htmlToMarkdown(hint)}`)
-    .join("\n")
+  const hints = renderHints(question.hints)
 
   return [
     `# ${question.questionFrontendId}. ${question.title}`,
@@ -305,6 +303,21 @@ export function renderReadme(question: LeetCodeQuestion) {
   ]
     .filter((part): part is string => part !== undefined)
     .join("\n")
+}
+
+function renderHints(hints: string[]) {
+  return hints
+    .map((hint, index) => {
+      return [
+        "<details>",
+        `<summary>Hint ${index + 1}</summary>`,
+        "",
+        htmlToMarkdown(hint),
+        "",
+        "</details>",
+      ].join("\n")
+    })
+    .join("\n\n")
 }
 
 export function renderSwiftSolution(question: LeetCodeQuestion, snippet: string) {

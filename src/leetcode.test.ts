@@ -66,6 +66,8 @@ test("renders README markdown with metadata and examples", () => {
   expect(readme).toContain("https://leetcode.com/problems/two-sum/");
   expect(readme).toContain("`2 <= nums.length <= 10^4`");
   expect(readme).toContain("```text\n[2,7,11,15]\n9\n```");
+  expect(readme).toContain("<details>\n<summary>Hint 1</summary>");
+  expect(readme).toContain("Use a `hash map`.");
 });
 
 test("renders a Swift solution file with sample assertions", () => {
@@ -154,5 +156,5 @@ const twoSumQuestion: LeetCodeQuestion = {
     },
   ],
   topicTags: [{ name: "Array" }, { name: "Hash Table" }],
-  hints: [],
+  hints: ["Use a <code>hash map</code>."],
 };
