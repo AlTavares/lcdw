@@ -64,10 +64,10 @@ test("renders README markdown with metadata and examples", () => {
   expect(readme).toContain("# 1. Two Sum");
   expect(readme).toContain("- Difficulty: Easy");
   expect(readme).toContain("https://leetcode.com/problems/two-sum/");
-  expect(readme).toContain("`2 <= nums.length <= 10^4`");
+  expect(readme).toContain("<code>2 &lt;= nums.length &lt;= 10<sup>4</sup></code>");
   expect(readme).toContain("```text\n[2,7,11,15]\n9\n```");
   expect(readme).toContain("<details>\n<summary>Hint 1</summary>");
-  expect(readme).toContain("Use a `hash map`.");
+  expect(readme).toContain("Use a <code>hash map</code>.");
 });
 
 test("renders a Swift solution file with sample assertions", () => {

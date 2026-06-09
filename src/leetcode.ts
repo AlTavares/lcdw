@@ -291,7 +291,7 @@ export function renderReadme(question: LeetCodeQuestion) {
     `- URL: https://leetcode.com/problems/${question.titleSlug}/`,
     topics ? `- Topics: ${topics}` : undefined,
     "",
-    htmlToMarkdown(question.content),
+    question.content.trim(),
     "",
     "## Example Testcases",
     "",
@@ -312,7 +312,7 @@ function renderHints(hints: string[]) {
         "<details>",
         `<summary>Hint ${index + 1}</summary>`,
         "",
-        htmlToMarkdown(hint),
+        hint.trim(),
         "",
         "</details>",
       ].join("\n")
