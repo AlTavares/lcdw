@@ -7,6 +7,7 @@ type SwiftSignature = {
   returnType: string
   params: Array<{
     externalName: string
+    internalName: string
     typeName: string
   }>
 }
@@ -20,7 +21,7 @@ export const swiftSolutionGenerator: SolutionGenerator = {
 
 export function renderSwiftSolution(question: LeetCodeQuestion, snippet: string) {
   const signature = parseSwiftSignature(snippet)
-  const examples = signature ? buildSwiftSampleTests(question, signature) : []
+  const testCases = signature ? buildSwiftTestCases(question, signature) : []
   const rawSamples = question.exampleTestcases.trim()
   const lines = [
     "import Foundation",
@@ -31,7 +32,9 @@ export function renderSwiftSolution(question: LeetCodeQuestion, snippet: string)
     "",
   ]
 
-  if (examples.length > 0) {
+  if (signature && testCases.length > 0) {
+    const testInputLabels = swiftTestInputLabels(signature)
+
     lines.push(
       "func canonical(_ value: Any) -> String {",
       '    String(describing: value).replacingOccurrences(of: " ", with: "")',
@@ -43,7 +46,13 @@ export function renderSwiftSolution(question: LeetCodeQuestion, snippet: string)
       "}",
       "",
       "let solution = Solution()",
-      ...examples,
+      "let testCases = [",
+      ...testCases.map((testCase) => `    ${testCase},`),
+      "]",
+      "",
+      "for testCase in testCases {",
+      `    expect(solution.${signature.methodName}(${swiftMethodCallArguments(signature, testInputLabels)}), testCase.expected)`,
+      "}",
       'print("All sample tests passed")',
     )
   } else {
@@ -75,9 +84,11 @@ export function parseSwiftSignature(snippet: string): SwiftSignature | null {
       const [labelPart, typePart] = param.split(":")
       const labels = labelPart?.trim().split(/\s+/).filter(Boolean) ?? []
       const externalName = labels.length > 1 ? labels[0] ?? "_" : labels[0] ?? "_"
+      const internalName = labels.at(-1) ?? `input${labels.length + 1}`
 
       return {
         externalName,
+        internalName,
         typeName: typePart?.trim().replace(/=.*$/, "").trim() ?? "",
       }
     })
@@ -89,7 +100,7 @@ export function parseSwiftSignature(snippet: string): SwiftSignature | null {
   }
 }
 
-function buildSwiftSampleTests(question: LeetCodeQuestion, signature: SwiftSignature) {
+function buildSwiftTestCases(question: LeetCodeQuestion, signature: SwiftSignature) {
   if (!isExecutableSwiftSignature(signature)) {
     return []
   }
@@ -99,7 +110,8 @@ function buildSwiftSampleTests(question: LeetCodeQuestion, signature: SwiftSigna
     .map((line) => line.trim())
     .filter(Boolean)
   const outputs = extractExampleOutputs(question.content)
-  const examples: string[] = []
+  const testCases: string[] = []
+  const inputLabels = swiftTestInputLabels(signature)
 
   for (let index = 0; index < outputs.length; index += 1) {
     const start = index * signature.params.length
@@ -109,22 +121,33 @@ function buildSwiftSampleTests(question: LeetCodeQuestion, signature: SwiftSigna
       break
     }
 
-    const callArgs = args.map((arg, argIndex) => {
-      const param = signature.params[argIndex]
-      const value = literalToSwift(arg)
+    const inputsTuple = args
+      .map((arg, argIndex) => `${inputLabels[argIndex]}: ${literalToSwift(arg)}`)
+      .join(", ")
 
-      if (!param || param.externalName === "_") {
+    const expected = expectedOutputForSwift(signature.returnType, outputs[index] ?? "")
+    testCases.push(`(${inputsTuple}, expected: ${swiftStringLiteral(expected)})`)
+  }
+
+  return testCases
+}
+
+function swiftTestInputLabels(signature: SwiftSignature) {
+  return signature.params.map((param, index) => param.internalName || param.externalName || `input${index + 1}`)
+}
+
+function swiftMethodCallArguments(signature: SwiftSignature, testInputLabels: string[]) {
+  return signature.params
+    .map((param, index) => {
+      const value = `testCase.${testInputLabels[index]}`
+
+      if (param.externalName === "_") {
         return value
       }
 
       return `${param.externalName}: ${value}`
     })
-
-    const expected = expectedOutputForSwift(signature.returnType, outputs[index] ?? "")
-    examples.push(`expect(solution.${signature.methodName}(${callArgs.join(", ")}), ${swiftStringLiteral(expected)})`)
-  }
-
-  return examples
+    .join(", ")
 }
 
 function extractExampleOutputs(content: string) {

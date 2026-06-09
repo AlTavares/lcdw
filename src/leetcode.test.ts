@@ -57,8 +57,8 @@ test("parses a Swift method signature", () => {
     methodName: "twoSum",
     returnType: "[Int]",
     params: [
-      { externalName: "_", typeName: "[Int]" },
-      { externalName: "_", typeName: "Int" },
+      { externalName: "_", internalName: "nums", typeName: "[Int]" },
+      { externalName: "_", internalName: "target", typeName: "Int" },
     ],
   });
 });
@@ -79,7 +79,10 @@ test("renders a Swift solution file with sample assertions", () => {
   const solution = renderSwiftSolution(twoSumQuestion, twoSumSwiftSnippet);
 
   expect(solution).toContain("class Solution");
-  expect(solution).toContain("expect(solution.twoSum([2,7,11,15], 9), \"[0,1]\")");
+  expect(solution).toContain("let testCases = [");
+  expect(solution).toContain("(nums: [2,7,11,15], target: 9, expected: \"[0,1]\")");
+  expect(solution).toContain("for testCase in testCases");
+  expect(solution).toContain("expect(solution.twoSum(testCase.nums, testCase.target), testCase.expected)");
   expect(solution).toContain('print("All sample tests passed")');
 });
 
