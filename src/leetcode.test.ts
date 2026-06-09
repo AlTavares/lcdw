@@ -3,6 +3,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
 import {
   downloadProblem,
+  getRegisteredSolutionGenerators,
   parseSwiftSignature,
   problemFolderName,
   problemSlugFromInput,
@@ -45,6 +46,10 @@ test("maps languages to solution filenames", () => {
   expect(solutionFileName("csharp")).toBe("Solution.cs");
   expect(solutionFileName("pythondata")).toBe("Solution.py");
   expect(solutionFileName("mysql")).toBe("Solution.sql");
+});
+
+test("registers dedicated solution generators", () => {
+  expect(getRegisteredSolutionGenerators()).toEqual(["swift"]);
 });
 
 test("parses a Swift method signature", () => {
