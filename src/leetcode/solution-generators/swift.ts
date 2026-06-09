@@ -45,31 +45,28 @@ function renderSwiftTableTestTemplate(input: {
 }) {
   const testInputLabels = swiftTestInputLabels(input.signature)
 
-  return `import Foundation
+  return `
+import Foundation
 
 ${input.snippet.trim()}
 
 // MARK: - Sample Tests
-
-func canonical(_ value: Any) -> String {
-    String(describing: value).replacingOccurrences(of: " ", with: "")
-}
-
-func expect(_ actual: Any, _ expected: String, file: StaticString = #filePath, line: UInt = #line) {
-    let normalizedExpected = expected.replacingOccurrences(of: " ", with: "")
-    assert(canonical(actual) == normalizedExpected, "Expected \\(expected), got \\(actual)", file: file, line: line)
-}
 
 let solution = Solution()
 let testCases = [
 ${input.testCases.map((testCase) => `    ${testCase},`).join("\n")}
 ]
 
-for testCase in testCases {
-    expect(solution.${input.signature.methodName}(${swiftMethodCallArguments(input.signature, testInputLabels)}), testCase.expected)
+for (index, testCase) in testCases.enumerated() {
+    let actual = solution.${input.signature.methodName}(${swiftMethodCallArguments(input.signature, testInputLabels)})
+    if actual == testCase.expected {
+      print("Test \\(index + 1) passed")
+    } else {
+      print("Test \\(index + 1) failed, expected \\(testCase.expected), got \\(actual)")
+    }
 }
-print("All sample tests passed")
-`
+
+`.trim()
 }
 
 function renderSwiftFallbackTemplate(input: {
@@ -147,8 +144,7 @@ function buildSwiftTestCases(question: LeetCodeQuestion, signature: SwiftSignatu
       .map((arg, argIndex) => `${inputLabels[argIndex]}: ${literalToSwift(arg)}`)
       .join(", ")
 
-    const expected = expectedOutputForSwift(signature.returnType, outputs[index] ?? "")
-    testCases.push(`(${inputsTuple}, expected: ${swiftStringLiteral(expected)})`)
+    testCases.push(`(${inputsTuple}, expected: ${outputs[index]})`)
   }
 
   return testCases
@@ -172,7 +168,7 @@ function swiftMethodCallArguments(signature: SwiftSignature, testInputLabels: st
     .join(", ")
 }
 
-function extractExampleOutputs(content: string) {
+export function extractExampleOutputs(content: string) {
   const lines = htmlToPlainText(content)
     .split(/\r?\n/)
     .map((line) => line.trim())
@@ -192,7 +188,6 @@ function extractExampleOutputs(content: string) {
       outputs.push(cleanOutput(match[1]))
     }
   }
-
   return outputs
 }
 
@@ -200,28 +195,8 @@ function cleanOutput(output: string) {
   return output.replace(/\s*Explanation:.*$/i, "").trim()
 }
 
-function expectedOutputForSwift(returnType: string, output: string) {
-  if (returnType.replace(/\s/g, "") === "String") {
-    try {
-      const parsed = JSON.parse(output) as unknown
-
-      if (typeof parsed === "string") {
-        return parsed
-      }
-    } catch {
-      return output
-    }
-  }
-
-  return output
-}
-
 function literalToSwift(value: string) {
   return value.replace(/\bnull\b/g, "nil")
-}
-
-function swiftStringLiteral(value: string) {
-  return JSON.stringify(value)
 }
 
 function isExecutableSwiftSignature(signature: SwiftSignature) {
