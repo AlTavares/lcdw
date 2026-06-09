@@ -27,6 +27,9 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .cache
 *.tsbuildinfo
 
+# local scratch files
+playground.ts
+
 # IntelliJ based IDEs
 .idea
 

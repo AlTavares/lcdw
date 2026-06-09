@@ -1,5 +1,6 @@
 export { fetchQuestion } from "./client"
 export { downloadProblem } from "./download"
+export { inspectQuestion } from "./inspect"
 export { LANGUAGE_LABELS, SUPPORTED_LANGUAGE_SLUGS, type SupportedLanguage } from "./languages"
 export { problemFolderName, problemSlugFromInput, solutionFileName } from "./paths"
 export { renderReadme } from "./readme"
